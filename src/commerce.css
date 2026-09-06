@@ -1,4 +1,4 @@
-.is-executing .command-surface { height: 100svh; min-height: 0; display: grid; grid-template-rows: 184px minmax(0, 1fr) 105px; justify-items: center; align-items: center; gap: 24px; padding: 88px 28px 28px; }
+.is-executing .command-surface { height: 100svh; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: 184px minmax(0, 1fr) 105px; justify-content: stretch; justify-items: center; align-items: center; gap: 24px; padding: 88px 28px 28px; }
 .is-executing .agent-stage { --orb-size: 124px; width: 550px; align-self: start; }
 .is-executing .agent-label { margin-top: 17px; }
 .is-executing .agent-description { margin-top: 5px; }
@@ -36,6 +36,7 @@
 .product-image { height: 133px; display: flex; align-items: center; justify-content: center; background: #fff; overflow: hidden; flex-shrink: 0; }
 .product-crop { position: relative; overflow: hidden; flex-shrink: 0; }
 .product-crop img { position: absolute; max-width: none; width: auto; height: auto; }
+.uncropped-product { width: 100%; height: 100%; object-fit: contain; }
 .product-copy { padding: 12px 14px; }
 .product-copy h3 { font-size: 12px; line-height: 1.4; font-weight: 550; margin: 0 0 5px; white-space: nowrap; }
 .product-copy p { font-size: 9px; color: #aaa6b0; margin-bottom: 8px; }
@@ -78,8 +79,8 @@
 .comparison .price-rows div { margin-bottom: 5px; }
 .comparison-current .price-rows { padding-top: 21px; }
 .comparison .price-rows .total-row { margin: 8px 0 0; padding-top: 7px; font-size: 20px; }
-.offer-value { display: flex; justify-content: space-between; align-items: center; gap: 10px; border-top: 1px solid #ffffff0c; padding-top: 10px; font-size: 10px; color: #d5d1da; }
-.offer-value span:last-child { font-size: 9px; }
+.offer-value { display: flex; justify-content: space-between; align-items: center; gap: 10px; border-top: 1px solid #ffffff0c; padding-top: 10px; font-size: 12px; color: #d5d1da; }
+.offer-value span:last-child { font-size: 10px; }
 .order-summary { width: 470px; max-width: 100%; background: #191a1e; border: 1px solid #ffffff15; border-radius: 14px; padding: 16px 22px; }
 .order-item { display: flex; align-items: center; gap: 13px; margin-bottom: 12px; font-size: 12px; }
 .order-item strong { margin-left: auto; font-weight: 500; white-space: nowrap; }
