@@ -16,7 +16,7 @@ export function DevControls({ flow, dispatch, onReplay, onReset }) {
   useEffect(() => {
     window.__novaDemo = {
       reset: onReset,
-      replay: (mode = flow.mode) => onReplay(mode),
+      replay: (mode = flow.mode, query = persona1.query) => onReplay(mode, query),
       jump: state => dispatch({ type: 'JUMP', state }),
       snapshot: () => ({ ...flow, order: persona1.order }),
     };
