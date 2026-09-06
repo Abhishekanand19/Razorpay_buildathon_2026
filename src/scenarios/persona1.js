@@ -1,3 +1,5 @@
+import { normalizeCommerceQuery } from '../speech/language.js';
+
 export const money = value => `₹${value.toLocaleString('en-IN')}`;
 
 export const persona1 = {
@@ -9,8 +11,8 @@ export const persona1 = {
   hardBudget: 500,
   authorizationMode: 'approval',
   products: [
-    { id: 'dot-key', name: 'Dot & Key Vitamin C+ E Face Sunscreen SPF 50 PA+++', shortName: 'Dot & Key Vitamin C+', orderName: 'Dot & Key Vitamin C+ SPF 50', price: 387, originalPrice: 445, discount: 58, size: '50 g', attributes: ['SPF 50', 'PA+++'], image: '/products/dot-key-source.png', crop: { x: 43, y: 16, width: 52, height: 117 }, bestMatch: true },
-    { id: 'minimalist', name: 'Minimalist Light Fluid Sunscreen SPF 50', shortName: 'Minimalist Light Fluid', price: 332, originalPrice: 349, discount: 17, size: '30 ml', attributes: ['SPF 50', 'Ultra-light'], image: '/products/minimalist-source.png', crop: { x: 43, y: 22, width: 63, height: 99 } },
+    { id: 'dot-key', name: 'Dot & Key Vitamin C+ E Face Sunscreen SPF 50 PA+++', shortName: 'Dot & Key Vitamin C+', orderName: 'Dot & Key Vitamin C+ SPF 50', price: 387, originalPrice: 445, discount: 58, size: '50 g', attributes: ['SPF 50', 'PA+++'], image: '/products/dot-key-source.png', crop: { x: 46, y: 19, width: 51, height: 112, mask: 'polygon(35% 0, 75% 0, 91% 5%, 100% 14%, 100% 78%, 81% 78%, 81% 98%, 20% 100%, 8% 95%, 8% 80%, 0 72%, 0 20%, 8% 8%)' }, bestMatch: true },
+    { id: 'minimalist', name: 'Minimalist Light Fluid Sunscreen SPF 50', shortName: 'Minimalist Light Fluid', price: 332, originalPrice: 349, discount: 17, size: '30 ml', attributes: ['SPF 50', 'Ultra-light'], image: '/products/minimalist-source.png', crop: { x: 45, y: 25, width: 60, height: 90, mask: 'polygon(0 0, 100% 0, 100% 90%, 63% 90%, 63% 100%, 0 100%)' } },
     { id: 'foxtale', name: 'Foxtale Glow Sunscreen SPF 50 PA++++', shortName: 'Foxtale Glow', price: 300, originalPrice: 375, discount: 75, size: '50 ml', attributes: ['SPF 50', 'PA++++'], image: '/products/foxtale-source.png', crop: { x: 15, y: 25, width: 43, height: 111 } },
   ],
   selectedProductId: 'dot-key',
@@ -39,9 +41,9 @@ persona1.order = calculateOrder(persona1);
 
 // Explicit deterministic scenario matching, not persona classification or an LLM.
 export function matchesPersona1(query) {
-  const normalized = query.toLowerCase().replace(/five hundred/g, '500');
+  const normalized = normalizeCommerceQuery(query);
   const amounts = normalized.match(/\d+(?:[.,]\d+)?/g) || [];
-  return /\bsunscreen\b/.test(normalized) && /\b(under|below|within|up to|max|maximum|budget)\b/.test(normalized)
+  return /(\bsunscreen\b|सनस्क्रीन)/.test(normalized) && /(\b(under|below|within|up to|max|maximum|budget|andar)\b|अंदर|तक|बजट)/.test(normalized)
     && amounts.length === 1 && Number(amounts[0]) === persona1.hardBudget;
 }
 
