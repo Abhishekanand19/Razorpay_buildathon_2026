@@ -31,7 +31,7 @@
 .scene-enter { animation: scene-enter 350ms ease-out both; }
 @keyframes scene-enter { from { opacity: 0; transform: translateY(9px); } to { opacity: 1; transform: translateY(0); } }
 .product-offers { width: 680px; max-width: 100%; height: 248px; flex-shrink: 0; position: relative; }
-.product-card { position: absolute; top: 0; left: calc(var(--index) * (100% + 16px) / 3); width: calc((100% - 32px) / 3); height: 233px; background: #1a1b20; border: 1px solid #ffffff13; border-radius: 14px; overflow: hidden; animation: card-entrance 400ms ease-out both; animation-delay: calc(var(--index) * 110ms); transition: left 650ms cubic-bezier(.2,.7,.2,1), transform 650ms ease, opacity 450ms ease, border-color 450ms ease, box-shadow 450ms ease, visibility 650ms; }
+.product-card { position: absolute; top: 0; left: calc(var(--index) * (100% + 16px) / 3); width: calc((100% - 32px) / 3); height: 233px; background: #1a1b20; border: 1px solid #ffffff13; border-radius: 14px; overflow: hidden; animation: card-entrance 400ms ease-out backwards; animation-delay: calc(var(--index) * 110ms); transition: left 650ms cubic-bezier(.2,.7,.2,1), transform 650ms ease, opacity 450ms ease, border-color 450ms ease, box-shadow 450ms ease, visibility 650ms; }
 @keyframes card-entrance { from { opacity: 0; translate: 0 10px; } to { opacity: 1; translate: 0 0; } }
 .product-image { height: 133px; display: flex; align-items: center; justify-content: center; background: #fff; overflow: hidden; flex-shrink: 0; }
 .product-crop { position: relative; overflow: hidden; flex-shrink: 0; }
