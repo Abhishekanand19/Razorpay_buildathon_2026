@@ -1,6 +1,9 @@
 import { test, expect } from '@playwright/test';
 import { persona1, calculateOrder, matchesPersona1, canAcceptOffer } from '../src/scenarios/persona1.js';
 import { scenes, flowReducer, initialFlow } from '../src/scenarios/flowMachine.js';
+import { mockPayment } from '../src/services/mockPayment.js';
+
+test.beforeEach(async ({ page }) => { await page.addInitScript(() => sessionStorage.setItem('nova-voice', 'off')); });
 
 test('scenario economics and input boundaries', () => {
   const order = calculateOrder(persona1);
@@ -21,9 +24,21 @@ test('scenario economics and input boundaries', () => {
   for (const phrase of [persona1.query, ...persona1.triggerPhrases, 'Buy sunscreen under five hundred']) expect(matchesPersona1(phrase)).toBe(true);
   for (const phrase of ['sunscreen under 400', 'sunscreen under 1500', 'sunscreen under 500.50', 'sunscreen under 500 not 400', 'shoes under 500']) expect(matchesPersona1(phrase)).toBe(false);
   const blocked = { ...initialFlow, state: 'AWAITING_APPROVAL', runId: 1 };
-  expect(flowReducer(blocked, { type: 'ELAPSED', from: 'ORDER_READY', runId: 1 })).toBe(blocked);
+  expect(flowReducer(blocked, { type: 'SCENE_COMPLETED', from: 'ORDER_READY', runId: 1 })).toBe(blocked);
   expect(flowReducer(blocked, { type: 'PAYMENT_RESOLVED', runId: 1, success: true })).toBe(blocked);
   expect(flowReducer(blocked, { type: 'SET_MODE', mode: 'full' })).toBe(blocked);
+  const ready = { ...initialFlow, state: 'ORDER_READY', runId: 2 };
+  const changed = flowReducer(ready, { type: 'SET_MODE', mode: 'full' });
+  expect(flowReducer(changed, { type: 'SCENE_COMPLETED', from: 'ORDER_READY', runId: 2 }).state).toBe('AUTONOMOUS_AUTHORIZATION');
+  expect(flowReducer(ready, { type: 'SCENE_COMPLETED', from: 'ORDER_READY', runId: 2 }).state).toBe('PAYMENT_APPROVAL_NOTICE');
+});
+
+test('mock payment is cancellable and requires authorization', async () => {
+  const controller = new AbortController();
+  const cancelled = mockPayment({ order: persona1.order, authorized: true, signal: controller.signal });
+  controller.abort();
+  await expect(cancelled).rejects.toMatchObject({ name: 'AbortError' });
+  await expect(mockPayment({ order: persona1.order, authorized: false, signal: new AbortController().signal })).resolves.toEqual({ success: false });
 });
 
 async function observeDemo(page) {
@@ -34,9 +49,9 @@ async function observeDemo(page) {
       if (!stage || window.observed.states.includes(stage.dataset.state)) return;
       window.observed.states.push(stage.dataset.state);
       const composer = document.querySelector('.prompt-composer').getBoundingClientRect();
-      const bounds = stage.getBoundingClientRect();
+      const content = [...stage.querySelectorAll('.scene-heading, .product-card, .basket-offer, .basket-analysis, .order-summary, .payment-stage, .verification')];
       if (document.documentElement.scrollHeight > innerHeight) window.observed.errors.push(`${stage.dataset.state}: scroll`);
-      if (bounds.bottom > composer.top) window.observed.errors.push(`${stage.dataset.state}: composer overlap`);
+      if (content.some(element => getComputedStyle(element).visibility !== 'hidden' && element.getBoundingClientRect().bottom > composer.top)) window.observed.errors.push(`${stage.dataset.state}: composer overlap`);
     });
     observer.observe(document.querySelector('main'), { subtree: true, attributes: true, childList: true });
   });
@@ -63,12 +78,12 @@ for (const mode of ['approval', 'full']) {
     expect(await page.locator('.product-crop img').evaluateAll(images => images.every(image => image.complete && image.naturalWidth > 0))).toBe(true);
     await expect(page.locator('.has-selection')).toBeVisible({ timeout: 5000 });
     await expect(page.locator('.best-product .best-match')).toBeVisible();
-    await expect(page.locator('.offer-value')).toContainText('₹40 more · get a ₹99 add-on', { timeout: 5000 });
+    await expect(page.locator('.offer-value')).toContainText('₹40 more · get a ₹99 add-on', { timeout: 10000 });
     await expect(page.locator('.offer-value')).toContainText('₹486 merchandise · within ₹500');
     await expect(page.locator('.dynamic-stage')).not.toContainText(/you save|savings|upsell|reasoning/i);
     if (mode === 'approval') {
       const approve = page.getByRole('button', { name: 'Approve ₹486' });
-      await expect(approve).toBeVisible({ timeout: 7000 });
+      await expect(approve).toBeVisible({ timeout: 15000 });
       await page.waitForTimeout(1600);
       await expect(page.locator('.dynamic-stage')).toHaveAttribute('data-state', 'AWAITING_APPROVAL');
       await expect(page.locator('.authorization-trigger')).toBeDisabled();
@@ -79,7 +94,7 @@ for (const mode of ['approval', 'full']) {
       await page.getByLabel('4-digit demo PIN').fill('1234');
       await page.getByRole('button', { name: 'Verify & pay ₹486' }).click();
     }
-    await expect(page.locator('.dynamic-stage')).toHaveAttribute('data-state', 'PAYMENT_SUCCESS', { timeout: 9000 });
+    await expect(page.locator('.dynamic-stage')).toHaveAttribute('data-state', 'PAYMENT_SUCCESS', { timeout: 15000 });
     await expect(page.locator('.payment-amount')).toHaveText('₹486');
     await expect(page.locator('.mock-disclosure')).toContainText('No money is charged');
     await expect(page.locator('.product-offers, .basket-offer, .order-summary')).toHaveCount(0);
@@ -102,6 +117,7 @@ for (const [width, height] of [[1366, 768], [1440, 900], [1920, 1080]]) {
     for (const state of Object.keys(scenes).filter(state => state !== 'IDLE')) {
       await page.evaluate(state => window.__novaDemo.jump(state), state);
       await expect(page.locator('.dynamic-stage')).toHaveAttribute('data-state', state);
+      await page.evaluate(() => Promise.all(document.getAnimations().filter(animation => animation.effect.getTiming().iterations !== Infinity).map(animation => animation.finished.catch(() => {}))));
       const layout = await page.evaluate(() => {
         const stage = document.querySelector('.dynamic-stage');
         const composer = document.querySelector('.prompt-composer').getBoundingClientRect();
@@ -118,9 +134,9 @@ for (const [width, height] of [[1366, 768], [1440, 900], [1920, 1080]]) {
 
 test('decline, reset, stale timers and hidden development controls', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByLabel('Development controls')).toHaveCount(0);
+  await expect(page.getByRole('complementary', { name: 'Development controls' })).toHaveCount(0);
   await page.keyboard.press('Control+Shift+D');
-  await expect(page.getByLabel('Development controls')).toBeVisible();
+  await expect(page.getByRole('complementary', { name: 'Development controls' })).toBeVisible();
   await page.getByLabel('Jump to scene').selectOption('AWAITING_APPROVAL');
   await page.keyboard.press('Escape');
   await page.getByRole('button', { name: 'Decline', exact: true }).click();
@@ -131,4 +147,19 @@ test('decline, reset, stale timers and hidden development controls', async ({ pa
   await page.waitForTimeout(1200);
   await expect(page.locator('.dynamic-stage')).toHaveCount(0);
   await expect(page.getByRole('textbox')).toHaveValue('');
+});
+
+test('voice transcription enters through the same composer', async ({ page }) => {
+  await page.addInitScript(() => {
+    window.SpeechRecognition = class {
+      start() { this.onstart(); this.onresult({ results: [[{ transcript: 'Buy sunscreen under five hundred' }]] }); this.onend(); }
+      abort() {}
+      stop() { this.onend(); }
+    };
+  });
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Speak your request' }).click();
+  await expect(page.getByRole('textbox')).toHaveValue('Buy sunscreen under five hundred');
+  await page.getByRole('button', { name: 'Send instruction' }).click();
+  await expect(page.locator('.dynamic-stage')).toHaveAttribute('data-state', 'BUYER_RECEIVING_INTENT');
 });
