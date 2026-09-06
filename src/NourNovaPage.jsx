@@ -3,12 +3,16 @@ import { AgentStage } from './components/AgentStage.jsx';
 import { PromptComposer } from './components/PromptComposer.jsx';
 import { CommerceStage } from './components/CommerceStage.jsx';
 import { DevControls } from './components/DevControls.jsx';
+import { VoiceToggle } from './components/VoiceToggle.jsx';
 import { usePersonaFlow } from './scenarios/usePersonaFlow.js';
 import { matchesPersona1, persona1 } from './scenarios/persona1.js';
 import './commerce.css';
+import './agent-communication.css';
 
 export function NourNovaPage() {
-  const { flow, scene, dispatch, busy, modeLocked } = usePersonaFlow();
+  const waveRef = useRef(null);
+  const stageRef = useRef(null);
+  const { flow, scene, dispatch, busy, modeLocked, narration, speechFallback, wavePhase, voiceEnabled, toggleVoice } = usePersonaFlow({ waveRef, stageRef });
   const [text, setText] = useState('');
   const [error, setError] = useState('');
   const root = useRef(null);
@@ -30,12 +34,12 @@ export function NourNovaPage() {
   function submit(query) {
     if (!matchesPersona1(query)) { setError(`This demo supports: “${persona1.query}”.`); return; }
     setError('');
-    dispatch({ type: 'START' });
+    dispatch({ type: 'START', query });
   }
   function reset() { dispatch({ type: 'RESET' }); setText(''); setError(''); }
-  function replay(mode) {
+  function replay(mode, query = persona1.query) {
     dispatch({ type: 'RESET' }); dispatch({ type: 'SET_MODE', mode });
-    setText(persona1.query); setError(''); dispatch({ type: 'START' });
+    setText(query); setError(''); dispatch({ type: 'START', query });
   }
   return (
     <div ref={root} className={`nova-page ${executing ? 'is-executing' : ''}`}>
@@ -45,9 +49,10 @@ export function NourNovaPage() {
         <span className="brand-divider" aria-hidden="true" />
         <span className="brand-descriptor">Agentic Commerce</span>
       </header>
-      <main className="command-surface" aria-label="Agentic commerce">
-        <AgentStage actor={scene.actor} direction={scene.direction} synchronized={flow.state === 'PAYMENT_SUCCESS'} />
-        {executing && <CommerceStage scene={scene} flow={flow} dispatch={dispatch} />}
+      <VoiceToggle enabled={voiceEnabled} onToggle={toggleVoice} fallback={speechFallback} />
+      <main ref={stageRef} className="command-surface" aria-label="Agentic commerce">
+        <AgentStage actor={narration?.speaker || (!scene.message ? scene.actor : undefined)} direction={scene.direction} waveRef={waveRef} wavePhase={wavePhase} speaking={narration?.speaking ? narration.speaker : null} synchronized={flow.state === 'PAYMENT_SUCCESS'} />
+        {executing && <CommerceStage scene={scene} flow={flow} dispatch={dispatch} narration={narration} />}
         <PromptComposer text={text} setText={value => { setText(value); setError(''); }} authorization={flow.mode}
           setAuthorization={mode => dispatch({ type: 'SET_MODE', mode })} onSubmit={submit} busy={busy} modeLocked={modeLocked} error={error} />
       </main>
