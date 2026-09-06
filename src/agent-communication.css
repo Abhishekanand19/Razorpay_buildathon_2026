@@ -1,0 +1,51 @@
+/* Agent identity refinements; the established page/composer layout is retained. */
+.nova-page .agent { --agent-accent: #64748b; --agent-edge: #9ba4b2; }
+.nova-page .agent--nova { --agent-accent: #746277; --agent-edge: #ad9eaf; }
+.nova-page .agent .agent-orb { background: #1b2028; box-shadow: 0 0 0 1px #aab2be28, 0 12px 35px #0005, inset 0 0 18px #0009; }
+.nova-page .agent--nova .agent-orb { background: #211d24; box-shadow: 0 0 0 1px #b3a7b629, 0 12px 35px #0005, inset 0 0 18px #0009; }
+.nova-page .agent .orb-interior { background: radial-gradient(ellipse at 35% 28%, #64748b3d, transparent 53%), radial-gradient(ellipse at 72% 87%, #64748b18, transparent 62%), radial-gradient(circle at 50% 40%, #28313d, #15191f 75%); }
+.nova-page .agent--nova .orb-interior { background: radial-gradient(ellipse at 35% 28%, #7462773d, transparent 53%), radial-gradient(ellipse at 72% 87%, #74627718, transparent 62%), radial-gradient(circle at 50% 40%, #332b36, #1b181e 75%); }
+.nova-page .agent .orb-ring { background: conic-gradient(from 15deg, #a2acbb55, #64748b10 21%, #64748b60 40%, #b4bdcc78 51%, #64748b08 68%, #9da7b84f 87%, #a2acbb55); }
+.nova-page .agent--nova .orb-ring { background: conic-gradient(from 15deg, #b1a2b555, #74627710 21%, #74627760 40%, #beafc378 51%, #74627708 68%, #a595aa4f 87%, #b1a2b555); }
+.nova-page .agent .orb-light { border-color: #a0aaba70; }
+.nova-page .agent--nova .orb-light { border-color: #ac9caf70; }
+.nova-page .neural-connection { color: #bec3cd; }
+.nova-page .neural-connection.to-nova { color: #8c9caf; }
+.nova-page .neural-connection.to-buyer { color: #a08ba4; }
+.nova-page .thread-presence { animation: neutral-presence 16s ease-in-out infinite; }
+@keyframes neutral-presence { 0%, 100% { opacity: .66; } 50% { opacity: .85; } }
+.nova-page.is-executing .thread-presence { animation: none; }
+.nova-page .agent-stage .agent-active .agent-orb { filter: brightness(1.1); box-shadow: 0 0 0 1px color-mix(in srgb, var(--agent-edge), transparent 50%), 0 0 25px color-mix(in srgb, var(--agent-accent), transparent 92%), inset 0 0 18px #0008; }
+.nova-page .agent-stage .agent-speaking .agent-orb { animation: speaker-breath 2100ms ease-in-out infinite; }
+.nova-page .agent-stage .agent-speaking .orb-interior { animation: speaker-light 2100ms ease-in-out infinite; }
+.nova-page .agent-stage .agent-receiving .agent-orb { animation: receiver-arrival 300ms ease-out both; }
+@keyframes speaker-breath { 0%, 100% { transform: scale(1); box-shadow: 0 0 0 1px var(--agent-accent), 0 0 18px #0002; } 50% { transform: scale(1.018); box-shadow: 0 0 0 1px var(--agent-edge), 0 0 26px color-mix(in srgb, var(--agent-accent), transparent 88%); } }
+@keyframes speaker-light { 0%, 100% { filter: brightness(1.05); } 50% { filter: brightness(1.22); } }
+@keyframes receiver-arrival { 0%, 100% { transform: scale(1); filter: brightness(1); } 45% { transform: scale(1.018); filter: brightness(1.24); } }
+.agent-label { position: relative; }
+.speaker-indicator { position: absolute; left: calc(100% - 14px); top: 50%; transform: translateY(-50%); display: flex; align-items: center; justify-content: center; gap: 2px; width: 16px; height: 14px; color: var(--agent-edge); }
+.speaker-indicator i { width: 2px; height: 7px; background: currentColor; border-radius: 2px; animation: speaker-meter 900ms ease-in-out infinite; }
+.speaker-indicator i:nth-child(2) { height: 12px; animation-delay: -300ms; }
+.speaker-indicator i:nth-child(3) { animation-delay: -600ms; }
+@keyframes speaker-meter { 50% { transform: scaleY(.5); } }
+.voice-controls { position: absolute; top: 34px; right: 40px; z-index: 6; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.voice-toggle { display: flex; align-items: center; gap: 7px; border: 1px solid transparent; background: transparent; color: #aaa5af; padding: 7px 9px; border-radius: 7px; font: inherit; font-size: 10px; transition: color 160ms, background 160ms; }
+.voice-toggle:hover { color: #e6dfe9; background: #ffffff07; }
+.voice-toggle:active { background: #ffffff0e; }
+.voice-fallback { font-size: 9px; color: #928c96; }
+.dynamic-stage .agent-subtitle { width: 100%; max-width: 720px; margin-bottom: 15px; min-height: 46px; }
+.subtitle-speaker { display: block; font-size: 9px; line-height: 1.4; letter-spacing: 1.6px; text-transform: uppercase; color: #96909e; }
+.dynamic-stage .agent-subtitle p { font-size: 14px; line-height: 1.5; letter-spacing: -.1px; color: #d7d1dc; margin: 7px auto 0; max-width: 670px; }
+.dynamic-stage .agent-subtitle p[lang="hi"] { font-family: 'Nirmala UI', 'Mangal', 'Segoe UI', sans-serif; font-size: 16px; line-height: 1.55; }
+.nova-page.is-executing .command-surface { grid-template-rows: 170px minmax(0, 1fr) 105px; gap: 19px; }
+.price-rows > div, .budget-note, .offer-value { transition: opacity 180ms, transform 180ms, visibility 180ms; }
+.step-hidden { opacity: 0; visibility: hidden; transform: translateY(4px); }
+.addon-arrival { animation: addon-from-nova 500ms cubic-bezier(.2,.7,.2,1) both; }
+@keyframes addon-from-nova { from { opacity: 0; transform: translate(30px, -12px); } to { opacity: 1; transform: translate(0, 0); } }
+.delivery-changed { display: inline-block; animation: delivery-resolved 220ms ease-out both; }
+.delivery-changed s { color: #8b8591; font-size: 9px; margin-right: 5px; text-decoration-color: #8b8591; }
+@keyframes delivery-resolved { from { opacity: .2; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
+@media (min-height: 850px) { .nova-page.is-executing .command-surface { grid-template-rows: 195px minmax(0, 1fr) 105px; gap: 25px; } }
+@media (min-width: 1700px) and (min-height: 950px) { .nova-page.is-executing .command-surface { grid-template-rows: 215px minmax(0, 1fr) 105px; } }
+@media (max-width: 700px) { .voice-controls { top: 23px; right: 17px; } .voice-fallback { max-width: 155px; font-size: 8px; } .nova-page.is-executing .command-surface { grid-template-rows: 150px minmax(350px, 1fr) 98px; gap: 15px; } .dynamic-stage .agent-subtitle p { font-size: 12px; } .dynamic-stage .agent-subtitle p[lang="hi"] { font-size: 14px; } .speaker-indicator { left: calc(100% - 8px); } }
+@media (prefers-reduced-motion: reduce) { .nova-page *, .nova-page *::before, .nova-page *::after { animation: none !important; transition: none !important; } .nova-page .agent-speaking .orb-ring, .nova-page .agent-receiving .orb-ring { filter: brightness(1.3); } }
