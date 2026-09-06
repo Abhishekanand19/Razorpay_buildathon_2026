@@ -1,61 +1,39 @@
-import React, { useId } from 'react';
+import React, { forwardRef, useId, useImperativeHandle, useRef } from 'react';
+import { runCommunicationWave, threadPath } from '../motion/communicationWave.js';
 
-export function AgentNode({ name, description, identity = 'buyer', active = false, className = '' }) {
-  return (
-    <div className={`agent agent--${identity} ${active ? 'agent-active' : ''} ${className}`}>
-      <div className="agent-orb" aria-hidden="true">
-        <div className="orb-interior" />
-        <div className="orb-ring" />
-        <div className="orb-light" />
-      </div>
-      <div className="agent-label">{name}</div>
-      {description && <div className="agent-description">{description}</div>}
-    </div>
-  );
+export function AgentNode({ name, description, identity = 'buyer', active = false, speaking = false, receiving = false, className = '' }) {
+  return <div className={`agent agent--${identity} ${active ? 'agent-active' : ''} ${speaking ? 'agent-speaking' : ''} ${receiving ? 'agent-receiving' : ''} ${className}`}>
+    <div className="agent-orb" aria-hidden="true"><div className="orb-interior" /><div className="orb-ring" /><div className="orb-light" /></div>
+    <div className="agent-label">{name}{speaking && <span className="speaker-indicator" aria-label="Speaking"><i /><i /><i /></span>}</div>
+    {description && <div className="agent-description">{description}</div>}
+  </div>;
 }
 
-export function NeuralConnection({ className = '', direction }) {
+export const NeuralConnection = forwardRef(function NeuralConnection({ direction }, ref) {
   const id = useId().replaceAll(':', '');
-  const paths = [
-    'M 0 90 C 90 90, 98 148, 180 112 S 280 65, 360 90',
-    'M 0 106 C 80 114, 113 49, 180 86 S 290 135, 360 100',
-    'M 0 118 C 96 156, 115 87, 180 96 S 275 58, 360 112',
-    'M 0 80 C 83 67, 117 113, 180 99 S 286 99, 360 83',
-    'M 0 99 C 87 93, 118 105, 180 100 S 275 119, 360 98',
-    'M 0 126 C 80 144, 132 118, 180 99 S 277 75, 360 76',
-  ];
-  return (
-    <svg className={`neural-connection ${direction || ''} ${className}`} viewBox="0 0 360 200" fill="none" aria-hidden="true">
-      <defs>
-        <linearGradient id={`${id}-thread`}>
-          <stop stopColor="#9fb6d5" stopOpacity=".08" />
-          <stop offset=".25" stopColor="#a2b5e0" stopOpacity=".52" />
-          <stop offset=".56" stopColor="#c7b9ef" stopOpacity=".8" />
-          <stop offset=".8" stopColor="#b7a1ed" stopOpacity=".6" />
-          <stop offset="1" stopColor="#b8a4ed" stopOpacity=".12" />
-        </linearGradient>
-        <filter id={`${id}-glow`} x="-20%" y="-80%" width="140%" height="260%">
-          <feGaussianBlur stdDeviation="3" />
-        </filter>
-      </defs>
-      <g stroke={`url(#${id}-thread)`} className="thread-presence">
-        <g filter={`url(#${id}-glow)`} strokeWidth="3" opacity=".48">
-          {paths.map((d, i) => <path d={d} key={i} />)}
-        </g>
-        {paths.map((d, i) => <path d={d} key={i} strokeWidth={i === 4 ? '1.1' : '.8'} opacity={i === 5 ? '.4' : '.8'} />)}
-      </g>
-      {direction && <path key={direction} className="directional-signal" d={paths[4]} pathLength="100" strokeWidth="2" stroke="#c9c7e9" />}
-    </svg>
-  );
-}
+  const svg = useRef(null);
+  useImperativeHandle(ref, () => ({ run: options => runCommunicationWave({ ...options, svg: svg.current }) }), []);
+  return <svg ref={svg} className={`neural-connection ${direction || ''}`} viewBox="0 0 360 200" preserveAspectRatio="none" fill="none" aria-hidden="true">
+    <defs>
+      <radialGradient id={`${id}-packet`} data-packet-gradient gradientUnits="userSpaceOnUse" cx="0" cy="100" r="70">
+        <stop stopColor="currentColor" stopOpacity=".9" /><stop offset="1" stopColor="currentColor" stopOpacity="0" />
+      </radialGradient>
+    </defs>
+    <g className="thread-presence" stroke="rgba(190,195,205,.23)">
+      {Array.from({ length: 6 }, (_, index) => <path data-wave-thread key={index} d={threadPath(index)} strokeWidth={index === 2 ? '1.1' : '.8'} />)}
+    </g>
+    <path data-wave-accent d={threadPath(2)} stroke={`url(#${id}-packet)`} strokeWidth="2.4" opacity="0" />
+    <circle data-wave-packet cx="0" cy="100" r="2.5" fill="currentColor" opacity="0" />
+  </svg>;
+});
 
-export function AgentStage({ actor, direction, synchronized = false }) {
-  return (
-    <section className={`agent-stage ${synchronized ? 'agents-synchronized' : ''}`} aria-label="Buyer Agent connected to Nova, Merchant Agent" data-direction={direction || 'idle'}>
-      <NeuralConnection direction={direction} />
-      <AgentNode name="Buyer Agent" identity="buyer" active={actor === 'buyer'} />
-      <AgentNode name="Nova" description="Merchant Agent" identity="nova" active={actor === 'nova'} />
-      {direction && <span className="communication-label">{direction === 'to-nova' ? 'Buyer → Nova' : 'Nova → Buyer'}</span>}
-    </section>
-  );
+export function AgentStage({ actor, direction, waveRef, wavePhase, speaking, synchronized = false }) {
+  const sender = direction === 'to-nova' ? 'buyer' : 'nova';
+  const receiver = direction === 'to-nova' ? 'nova' : 'buyer';
+  return <section className={`agent-stage ${synchronized ? 'agents-synchronized' : ''}`} aria-label="Buyer Agent connected to Nova, Merchant Agent" data-direction={direction || 'idle'} data-wave-phase={wavePhase || 'idle'}>
+    <NeuralConnection ref={waveRef} direction={direction} />
+    <AgentNode name="Buyer Agent" identity="buyer" active={actor === 'buyer' || (wavePhase === 'build' && sender === 'buyer')} speaking={speaking === 'buyer'} receiving={wavePhase === 'receive' && receiver === 'buyer'} />
+    <AgentNode name="Nova" description="Merchant Agent" identity="nova" active={actor === 'nova' || (wavePhase === 'build' && sender === 'nova')} speaking={speaking === 'nova'} receiving={wavePhase === 'receive' && receiver === 'nova'} />
+    {direction && <span className="communication-label">{direction === 'to-nova' ? 'Buyer → Nova' : 'Nova → Buyer'}</span>}
+  </section>;
 }
