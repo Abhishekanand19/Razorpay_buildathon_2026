@@ -14,7 +14,7 @@
 <br>
 
 [▶ **Watch Demo**](https://youtu.be/5xZOXPBDyO8) &nbsp; • &nbsp;
-[🚀 **Try Nova Live**](YOUR_VERCEL_LINK_HERE)
+
 
 </div>
 
